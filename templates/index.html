@@ -31,6 +31,30 @@
       justify-content: center;
       min-height: 100vh;
       padding: 20px;
+      position: relative;
+    }
+
+    .navbar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .navbar a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 8px 16px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .navbar a:hover {
+      background-color: #fff;
+      color: var(--bg-color);
     }
 
     .container {
@@ -83,10 +107,6 @@
       margin-top: 20px;
     }
 
-    /* 
-      Make the button fixed-width so changing text won't shift left/right,
-      and use flex to keep text centered. 
-    */
     .generate-button {
       width: 200px; 
       padding: 12px;
@@ -108,7 +128,6 @@
       transition: box-shadow 0.3s, color 0.3s;
     }
 
-    /* A keyframe animation with more steps for smoother color transitions */
     @keyframes rainbow-smooth {
       0%   { box-shadow: 0 0 10px #FF2E2E; }
       14%  { box-shadow: 0 0 10px #FF831E; }
@@ -121,7 +140,6 @@
     }
 
     .rainbow-active {
-      /* 6s for a smoother, slower color shift */
       animation: rainbow-smooth 6s linear infinite;
       border-color: transparent !important;
     }
@@ -138,14 +156,15 @@
   </style>
 </head>
 <body>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <a href="/">Home</a>
+    <a href="/settings">Settings</a>
+  </div>
+
   <div class="container">
     <h1>Video Generator</h1>
 
-    <!-- 
-      We set onsubmit so that as soon as user clicks "Generate", 
-      we run "startGenerating()" before the form is actually submitted 
-      to the server.
-    -->
     <form method="POST" action="/generate_video" onsubmit="startGenerating()">
       <div class="form-group">
         <label for="user_topic">Video Topic (blank = random):</label>
@@ -182,10 +201,6 @@
       <div class="center">
         <button id="generateBtn" class="generate-button" type="submit">Generate</button>
       </div>
-
-      {% if result_message %}
-        <div class="notice">{{ result_message }}</div>
-      {% endif %}
     </form>
   </div>
 
@@ -205,25 +220,6 @@
       // Show "Generating"
       btn.textContent = "Generating";
     }
-
-    // After server completes, we get a new page load with "Done" in the .notice
-    // So we detect that & show "Done" for 2s, then revert to "Generate"
-    window.addEventListener("load", () => {
-      const noticeElem = document.querySelector(".notice");
-      const btn = document.getElementById("generateBtn");
-
-      if (noticeElem && noticeElem.textContent.includes("Done")) {
-        btn.textContent = "Done";
-        btn.classList.remove("rainbow-active");
-        btn.disabled = true;
-        btn.style.color = "var(--button-text-color)";
-
-        setTimeout(() => {
-          btn.textContent = "Generate";
-          btn.disabled = false;
-        }, 2000);
-      }
-    });
   </script>
 </body>
 </html>

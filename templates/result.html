@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Generated</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+    :root {
+      --font: 'Poppins', sans-serif;
+      --bg-color: #151320;
+      --container-bg: #fff;
+      --button-color: #555;
+      --button-hover-bg: #fff;
+      --button-hover-color: #151320;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    .navbar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .navbar a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 8px 16px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .navbar a:hover {
+      background-color: #fff;
+      color: var(--bg-color);
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--container-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .download-link {
+      margin-top: 20px;
+    }
+
+    .download-link a {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+
+    .download-link a:hover {
+      background-color: #218838;
+    }
+
+    .timer {
+      margin-top: 15px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .error-message {
+      margin-top: 20px;
+      color: red;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <a href="/">Home</a>
+    <a href="/settings">Settings</a>
+  </div>
+
+  <div class="container">
+    <h1>Video Generated Successfully!</h1>
+
+    {% if download_url %}
+      <div class="download-link">
+        <a href="{{ download_url }}">Download Your Video</a>
+      </div>
+      <div class="timer" id="timer">
+        The file will be deleted in 1 minute.
+      </div>
+    {% elif error_message %}
+      <div class="error-message">
+        {{ error_message }}
+      </div>
+    {% else %}
+      <div class="error-message">
+        An unexpected error occurred.
+      </div>
+    {% endif %}
+  </div>
+
+  {% if download_url %}
+    <script>
+      // Countdown timer (optional visual feedback)
+      let countdown = 60;
+      const timerElem = document.getElementById("timer");
+
+      const interval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          timerElem.textContent = `Download link is available for ${countdown} second(s).`;
+        } else {
+          timerElem.textContent = "The file has been deleted.";
+
+          // Disable the download link after deletion
+          const downloadLink = document.querySelector(".download-link a");
+          if (downloadLink) {
+            downloadLink.href = "#";
+            downloadLink.textContent = "Download Link Expired";
+            downloadLink.style.pointerEvents = "none";
+            downloadLink.style.backgroundColor = "#ccc";
+            downloadLink.style.color = "#666";
+          }
+
+          clearInterval(interval);
+        }
+      }, 1000);
+    </script>
+  {% endif %}
+</body>
+</html>

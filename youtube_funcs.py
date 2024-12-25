@@ -69,4 +69,4 @@ def upload_video(YOUTUBE_TOKEN_PATH, YOUTUBE_CLIENT_SECRET_PATH, video_file_path
     print(f"Video uploaded. Video ID: {response['id']}")
 
 
-#upload_video(YOUTUBE_TOKEN_PATH, YOUTUBE_CLIENT_SECRET_PATH, 'output/[elevenlabs][luma] Roller-Skating to Church Venezuelas Unique Christmas Tradition.mp4', "[elevenlabs][luma] Roller-Skating to Church Venezuelas Unique Christmas Tradition")
+#upload_video(YOUTUBE_TOKEN_PATH, YOUTUBE_CLIENT_SECRET_PATH, 'output/[gtts][pexels] Unveiling the Mystery of the Tittle The Dot Over i and j.mp4', "[gtts][pexels] Unveiling the Mystery of the Tittle The Dot Over i and j")
