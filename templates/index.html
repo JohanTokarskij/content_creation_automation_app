@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+    :root {
+      --font: 'Poppins', sans-serif;
+      --bg-color: #151320;
+      --container-bg: #fff;
+      --input-border: #ccc;
+      --label-color: #333;
+      --text-color: #333;
+      --button-text-color: #000;
+      --button-text-color-disabled: #aaa;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--container-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+      color: var(--label-color);
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background-color: #fff;
+      color: var(--text-color);
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 5px;
+      flex-wrap: wrap;
+    }
+
+    .center {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    /* 
+      Make the button fixed-width so changing text won't shift left/right,
+      and use flex to keep text centered. 
+    */
+    .generate-button {
+      width: 200px; 
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--button-text-color);
+      background: white;
+      border: 2px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: box-shadow 0.3s, color 0.3s;
+    }
+
+    /* A keyframe animation with more steps for smoother color transitions */
+    @keyframes rainbow-smooth {
+      0%   { box-shadow: 0 0 10px #FF2E2E; }
+      14%  { box-shadow: 0 0 10px #FF831E; }
+      28%  { box-shadow: 0 0 10px #FCFF51; }
+      42%  { box-shadow: 0 0 10px #58FF57; }
+      56%  { box-shadow: 0 0 10px #575FFF; }
+      70%  { box-shadow: 0 0 10px #D257FF; }
+      84%  { box-shadow: 0 0 10px #FF57E5; }
+      100% { box-shadow: 0 0 10px #FF1556; }
+    }
+
+    .rainbow-active {
+      /* 6s for a smoother, slower color shift */
+      animation: rainbow-smooth 6s linear infinite;
+      border-color: transparent !important;
+    }
+
+    .notice {
+      color: green;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    input[type="radio"] {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Video Generator</h1>
+
+    <!-- 
+      We set onsubmit so that as soon as user clicks "Generate", 
+      we run "startGenerating()" before the form is actually submitted 
+      to the server.
+    -->
+    <form method="POST" action="/generate_video" onsubmit="startGenerating()">
+      <div class="form-group">
+        <label for="user_topic">Video Topic (blank = random):</label>
+        <input type="text" id="user_topic" name="user_topic" placeholder="e.g. 'Ancient Rome'">
+      </div>
+      <div class="form-group">
+        <label for="user_script">Or Provide Your Script:</label>
+        <textarea id="user_script" name="user_script" rows="4" placeholder="Paste custom text..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Audio Source:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="audio_source" value="gtts" checked> Google gTTS</label>
+          <label><input type="radio" name="audio_source" value="elevenlabs"> ElevenLabs</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Video Source:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="video_source" value="pixabay" checked> Pixabay</label>
+          <label><input type="radio" name="video_source" value="pexels"> Pexels</label>
+          <label><input type="radio" name="video_source" value="storyblocks"> Storyblocks</label>
+          <label><input type="radio" name="video_source" value="luma"> LumaAI</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Upload to YouTube or Save Locally?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="upload_option" value="local" checked> Local</label>
+          <label><input type="radio" name="upload_option" value="youtube"> YouTube</label>
+        </div>
+      </div>
+
+      <div class="center">
+        <button id="generateBtn" class="generate-button" type="submit">Generate</button>
+      </div>
+
+      {% if result_message %}
+        <div class="notice">{{ result_message }}</div>
+      {% endif %}
+    </form>
+  </div>
+
+  <script>
+    function startGenerating() {
+      const btn = document.getElementById("generateBtn");
+
+      // Add rainbow effect
+      btn.classList.add("rainbow-active");
+
+      // Disable button to prevent multiple clicks
+      btn.disabled = true;
+
+      // Gray text color
+      btn.style.color = "var(--button-text-color-disabled)";
+
+      // Show "Generating"
+      btn.textContent = "Generating";
+    }
+
+    // After server completes, we get a new page load with "Done" in the .notice
+    // So we detect that & show "Done" for 2s, then revert to "Generate"
+    window.addEventListener("load", () => {
+      const noticeElem = document.querySelector(".notice");
+      const btn = document.getElementById("generateBtn");
+
+      if (noticeElem && noticeElem.textContent.includes("Done")) {
+        btn.textContent = "Done";
+        btn.classList.remove("rainbow-active");
+        btn.disabled = true;
+        btn.style.color = "var(--button-text-color)";
+
+        setTimeout(() => {
+          btn.textContent = "Generate";
+          btn.disabled = false;
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>
