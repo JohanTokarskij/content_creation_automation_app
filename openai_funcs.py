@@ -359,19 +359,3 @@ def generate_video_title_and_hashtags(video_topic: str) -> Dict[str, List[str]]:
 
     return response
 
-
-if __name__ == "__main__":
-    channel_subject = "Fun and lesser known facts"
-
-    video_fact = generate_video_topic(channel_subject)
-    if video_fact:
-        scripts = generate_script(video_fact, '15')
-        if scripts:
-            detailed_prompts = generate_detailed_prompts(scripts)
-        
-            # Step 3: Generate video title and hashtags for YouTube
-            title_and_hashtags = generate_video_title_and_hashtags(video_fact)
-        else:
-            print("No script and search terms generated.")
-    else:
-        print("No video fact generated.")
