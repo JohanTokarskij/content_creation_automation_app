@@ -1,22 +1,20 @@
 import os
-import random
-import requests
 from urllib.parse import urlencode
+
+import requests
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 from moviepy.video.fx.all import crop
-from dotenv import load_dotenv
+
 from helper_funcs import configure_moviepy
 
-load_dotenv()
-PIXABAY_API_KEY = os.getenv('PIXABAY_API_KEY')
 
-def search_videos_pixabay(search_term, safesearch=True):
+def search_videos_pixabay(search_term, safesearch=True, api_key=None):
     """
     Search for videos on Pixabay by 'search_term'. Returns a list of video data dicts.
     """
     base_url = 'https://pixabay.com/api/videos/'
     params = {
-        'key': PIXABAY_API_KEY,
+        'key': api_key,
         'q': search_term,
         'video_type': 'film',
         'safesearch': str(safesearch).lower(),
@@ -31,6 +29,7 @@ def search_videos_pixabay(search_term, safesearch=True):
     except Exception as e:
         print(f"Error searching Pixabay videos: {e}")
         return []
+
 
 def download_video_pixabay(video_data, output_path):
     """
@@ -55,7 +54,8 @@ def download_video_pixabay(video_data, output_path):
         print(f"Error downloading Pixabay video: {e}")
         return False
 
-def process_videos_pixabay(scripts, search_terms, audio_dir, output_path):
+
+def process_videos_pixabay(scripts, search_terms, audio_dir, output_path, api_key=None):
     """
     Creates a single final video at 'output_path' from the given scripts/search terms.
     """
@@ -86,7 +86,7 @@ def process_videos_pixabay(scripts, search_terms, audio_dir, output_path):
         else:
             search_term = "generic"
 
-        hits = search_videos_pixabay(search_term)
+        hits = search_videos_pixabay(search_term, safesearch=True, api_key=api_key)
         suitable_hits = [h for h in hits if h.get('duration', 0) >= audio_duration]
         if not suitable_hits:
             print(f"No suitable Pixabay videos found for scene {idx}.")

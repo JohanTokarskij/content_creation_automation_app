@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Video Generator</title>
+  <title>Settings</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
@@ -105,10 +105,11 @@
       display: flex;
       justify-content: center;
       margin-top: 20px;
+      gap: 20px;
     }
 
     .generate-button {
-      width: 200px; 
+      width: 200px;
       padding: 12px;
       font-size: 16px;
       font-weight: 600;
@@ -163,77 +164,45 @@
   </div>
 
   <div class="container">
-    <h1>Video Generator</h1>
-
-    <form method="POST" action="/generate_video" onsubmit="startGenerating()">
+    <h1>Settings</h1>
+    <form method="POST" action="/update_settings">
       <div class="form-group">
-        <label for="user_topic">Video Topic (blank = random):</label>
-        <input type="text" id="user_topic" name="user_topic" placeholder="e.g. 'Ancient Rome'">
+        <label for="elevenlabs_api">ElevenLabs API Key:</label>
+        <input type="text" id="elevenlabs_api" name="elevenlabs_api" value="{{ elevenlabs_api }}"><br><br>
       </div>
       <div class="form-group">
-        <label for="user_script">Or Provide Your Script:</label>
-        <textarea id="user_script" name="user_script" rows="4" placeholder="Paste custom text..."></textarea>
+        <label for="openai_api">OpenAI API Key:</label>
+        <input type="text" id="openai_api" name="openai_api" value="{{ openai_api }}"><br><br>
       </div>
       <div class="form-group">
-        <label>Audio Source:</label>
-        <div class="radio-group">
-          <label><input type="radio" name="audio_source" value="gtts" checked> Google gTTS</label>
-          <label><input type="radio" name="audio_source" value="elevenlabs"> ElevenLabs</label>
-        </div>
+        <label for="pixabay_api">Pixabay API Key:</label>
+        <input type="text" id="pixabay_api" name="pixabay_api" value="{{ pixabay_api }}"><br><br>
       </div>
       <div class="form-group">
-        <label>Video Source:</label>
-        <div class="radio-group">
-          <label><input type="radio" name="video_source" value="pixabay" checked> Pixabay</label>
-          <label><input type="radio" name="video_source" value="pexels"> Pexels</label>
-          <label><input type="radio" name="video_source" value="storyblocks"> Storyblocks</label>
-          <label><input type="radio" name="video_source" value="luma"> LumaAI</label>
-        </div>
+        <label for="pexels_api">Pexels API Key:</label>
+        <input type="text" id="pexels_api" name="pexels_api" value="{{ pexels_api }}"><br><br>
       </div>
       <div class="form-group">
-        <label>Upload to YouTube or Save Locally?</label>
-        <div class="radio-group">
-          <label><input type="radio" name="upload_option" value="local" checked> Local</label>
-          <label><input type="radio" name="upload_option" value="youtube"> YouTube</label>
-        </div>
+        <label for="storyblocks_public">Storyblocks Public API Key:</label>
+        <input type="text" id="storyblocks_public" name="storyblocks_public" value="{{ storyblocks_public }}"><br><br>
       </div>
-
+      <div class="form-group">
+        <label for="storyblocks_private">Storyblocks Private API Key:</label>
+        <input type="text" id="storyblocks_private" name="storyblocks_private" value="{{ storyblocks_private }}"><br><br>
+      </div>
+      <div class="form-group">
+        <label for="luma_api">LumaAI API Key:</label>
+        <input type="text" id="luma_api" name="luma_api" value="{{ luma_api }}"><br><br>
+      </div>
+      <div class="form-group">
+        <label for="youtube_client_secret">YouTube client_secret.json content:</label>
+        <textarea id="youtube_client_secret" name="youtube_client_secret" rows="6" cols="60">{{ youtube_client_secret }}</textarea>
+      </div>
       <div class="center">
-        <button id="generateBtn" class="generate-button" type="submit">Generate</button>
-      </div>
-      <div style="min-height:25px;">
-        {% if result_message %}
-          <p id="resultMessage" style="color: red;">{{ result_message }}</p>
-          <script>
-            // Hide the message after 3 seconds
-            setTimeout(function() {
-              var el = document.getElementById("resultMessage");
-              if (el) {
-                el.style.display = "none";
-              }
-            }, 3000);
-          </script>
-        {% endif %}
+        <button class="generate-button" type="submit">Save Settings</button>
+        <button class="generate-button" type="button" onclick="window.location.href='/'">Cancel</button>
       </div>
     </form>
   </div>
-
-  <script>
-    function startGenerating() {
-      const btn = document.getElementById("generateBtn");
-
-      // Add rainbow effect
-      btn.classList.add("rainbow-active");
-
-      // Disable button to prevent multiple clicks
-      btn.disabled = true;
-
-      // Gray text color
-      btn.style.color = "var(--button-text-color-disabled)";
-
-      // Show "Generating"
-      btn.textContent = "Generating";
-    }
-  </script>
 </body>
 </html>

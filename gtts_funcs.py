@@ -1,5 +1,7 @@
 import os
+
 from gtts import gTTS
+
 
 def generate_audio_files_gtts(scripts, output_dir):
     """

@@ -46,7 +46,6 @@ def get_local_ffmpeg_path():
     if not os.path.exists(ffmpeg_path):
         raise FileNotFoundError(f"FFmpeg binary not found at {ffmpeg_path}. Please ensure it is downloaded and placed correctly.")
     
-    # On Linux, ensure the ffmpeg binary has execute permissions
     if platform.system() == "Linux":
         os.chmod(ffmpeg_path, os.stat(ffmpeg_path).st_mode | 0o111)  # Adds execute permissions
     

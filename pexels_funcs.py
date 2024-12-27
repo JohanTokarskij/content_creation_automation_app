@@ -1,16 +1,12 @@
 import os
-import random
+
 import requests
-from urllib.parse import urlencode
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 from moviepy.video.fx.all import crop
-from dotenv import load_dotenv
 from helper_funcs import configure_moviepy
 
-load_dotenv()
-PEXELS_API_KEY = os.getenv('PEXELS_API_KEY')
 
-def search_videos_pexels(search_term, min_duration=None):
+def search_videos_pexels(search_term, min_duration=None, api_key=None):
     base_url = "https://api.pexels.com/videos/search"
     params = {
         "query": search_term,
@@ -19,7 +15,7 @@ def search_videos_pexels(search_term, min_duration=None):
     try:
         response = requests.get(
             base_url, 
-            headers={"Authorization": PEXELS_API_KEY}, 
+            headers={"Authorization": api_key}, 
             params=params
         )
         response.raise_for_status()
@@ -61,7 +57,7 @@ def download_video_pexels(video_data, output_path):
         print(f"Error downloading Pexels video: {e}")
         return False
 
-def process_videos_pexels(scripts, search_terms, audio_dir, output_path):
+def process_videos_pexels(scripts, search_terms, audio_dir, output_path, api_key=None):
     """
     Generates a single final video at 'output_path' from the given scripts/search terms.
     """
@@ -93,7 +89,7 @@ def process_videos_pexels(scripts, search_terms, audio_dir, output_path):
             search_term = "generic"  # fallback if not enough terms
 
         min_duration = int(audio_duration) + 1
-        hits = search_videos_pexels(search_term, min_duration=min_duration)
+        hits = search_videos_pexels(search_term, min_duration=min_duration, api_key=api_key)
         suitable_hits = [h for h in hits if h.get("duration", 0) >= audio_duration]
         if not suitable_hits:
             print(f"No suitable Pexels videos for scene {idx}.")

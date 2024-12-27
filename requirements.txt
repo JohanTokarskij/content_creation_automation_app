@@ -24,3 +24,4 @@ lumaai
 gTTS
 Flask
 imageio-ffmpeg
+requests

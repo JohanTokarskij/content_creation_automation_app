@@ -1,13 +1,9 @@
-import requests
 import os
-from dotenv import load_dotenv
+
+import requests
 
 
-load_dotenv()
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-
-
-def generate_audio_files_elevenlabs(scripts, output_dir):
+def generate_audio_files_elevenlabs(scripts, output_dir, api_key=None):
     CHUNK_SIZE = 1024
     VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'
     URL_TEMPLATE = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
@@ -15,7 +11,7 @@ def generate_audio_files_elevenlabs(scripts, output_dir):
     HEADERS = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": ELEVENLABS_API_KEY
+        "xi-api-key": api_key
     }
 
     if not os.path.exists(output_dir):

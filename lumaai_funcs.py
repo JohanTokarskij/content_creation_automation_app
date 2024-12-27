@@ -1,12 +1,10 @@
 import os
 import time
+
 import requests
-from dotenv import load_dotenv
 from lumaai import LumaAI
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips, vfx
 
-load_dotenv()
-LUMAAI_API_KEY = os.getenv('LUMAAI_API_KEY')
 
 def _poll_generation(client, generation_id, max_retries=3):
     retries = 0
@@ -25,6 +23,7 @@ def _poll_generation(client, generation_id, max_retries=3):
         print("Dreaming...")
         time.sleep(3)
 
+
 def _download_luma_video(generation, output_path):
     video_url = generation.assets.video
     response = requests.get(video_url, stream=True)
@@ -35,8 +34,9 @@ def _download_luma_video(generation, output_path):
                 file.write(chunk)
     print(f"File downloaded as {output_path}")
 
-def generate_luma_video(prompt, aspect_ratio="9:16", max_retries=3):
-    client = LumaAI(auth_token=LUMAAI_API_KEY)
+
+def generate_luma_video(prompt, aspect_ratio="9:16", max_retries=3, api_key=None):
+    client = LumaAI(auth_token=api_key)
     retries = 0
     while retries < max_retries:
         try:
@@ -51,7 +51,8 @@ def generate_luma_video(prompt, aspect_ratio="9:16", max_retries=3):
                 return None
     return None
 
-def process_videos_luma(detailed_prompts, audio_dir, output_path, max_retries=3):
+
+def process_videos_luma(detailed_prompts, audio_dir, output_path, max_retries=3, api_key=None):
     """
     Generates a single final Luma video at 'output_path' using a list of detailed prompts.
     We create exactly one ~5s Luma clip per scene, then speed up or slow it down to match
@@ -81,7 +82,10 @@ def process_videos_luma(detailed_prompts, audio_dir, output_path, max_retries=3)
         print(f"\nProcessing scene {idx}: Audio duration = {audio_duration:.2f}s")
 
         # Generate exactly one Luma clip
-        generation = generate_luma_video(prompt, aspect_ratio="9:16", max_retries=max_retries)
+        generation = generate_luma_video(prompt, 
+                                         aspect_ratio="9:16", 
+                                         max_retries=max_retries,
+                                         api_key=api_key)
         if not generation:
             print(f"Failed to generate Luma clip for scene {idx}.")
             audio_clip.close()

@@ -2,18 +2,17 @@ import os
 import time
 import hmac
 import hashlib
-import requests
-import random
 from urllib.parse import urlencode
+
+import requests
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 from moviepy.video.fx.all import crop
-from dotenv import load_dotenv
+
 from helper_funcs import configure_moviepy
 
-load_dotenv()
-STORYBLOCKS_PUBLIC_API_KEY = os.getenv('STORYBLOCKS_PUBLIC_API_KEY')
-STORYBLOCKS_PRIVATE_API_KEY = os.getenv('STORYBLOCKS_PRIVATE_API_KEY')
+
 BASE_URL = "https://api.storyblocks.com"
+
 
 def generate_hmac(private_key, resource, expires):
     message = private_key + expires
@@ -25,16 +24,16 @@ def generate_hmac(private_key, resource, expires):
     return hmac_builder.hexdigest()
 
 
-def search_videos_storyblocks(search_term, min_duration=None, per_page=10):
+def search_videos_storyblocks(search_term, min_duration=None, per_page=10, private_api_key=None, public_api_key=None):
     """
     Search Storyblocks by keyword. Filter by min_duration (seconds) if provided.
     """
     search_resource = "/api/v2/videos/search"
     expires = str(int(time.time()) + 3600)
-    hmac_sig = generate_hmac(STORYBLOCKS_PRIVATE_API_KEY, search_resource, expires)
+    hmac_sig = generate_hmac(private_api_key, search_resource, expires)
 
     params = {
-        "APIKEY": STORYBLOCKS_PUBLIC_API_KEY,
+        "APIKEY": public_api_key,
         "EXPIRES": expires,
         "HMAC": hmac_sig,
         "keywords": search_term,
@@ -57,16 +56,16 @@ def search_videos_storyblocks(search_term, min_duration=None, per_page=10):
         return []
 
 
-def download_video_storyblocks(video_id, output_path):
+def download_video_storyblocks(video_id, output_path, private_api_key=None, public_api_key=None):
     """
     Download a Storyblocks video by video_id and write it to output_path.
     """
     download_resource = f"/api/v2/videos/stock-item/download/{video_id}"
     expires = str(int(time.time()) + 3600)
-    hmac_sig = generate_hmac(STORYBLOCKS_PRIVATE_API_KEY, download_resource, expires)
+    hmac_sig = generate_hmac(private_api_key, download_resource, expires)
 
     params = {
-        "APIKEY": STORYBLOCKS_PUBLIC_API_KEY,
+        "APIKEY": public_api_key,
         "EXPIRES": expires,
         "HMAC": hmac_sig,
         "project_id": hmac_sig,
@@ -113,7 +112,8 @@ def download_video_storyblocks(video_id, output_path):
         return False
 
 
-def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path):
+def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path,
+                               private_api_key=None, public_api_key=None):
     """
     Creates a single final video at 'output_path' from the given scripts & search terms.
     """
@@ -145,7 +145,10 @@ def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path):
             search_term = "generic"
 
         min_duration = int(audio_duration) + 1
-        hits = search_videos_storyblocks(search_term, min_duration=min_duration)
+        hits = search_videos_storyblocks(search_term, 
+                                         min_duration=min_duration,
+                                         private_api_key=private_api_key, 
+                                         public_api_key=public_api_key)
         suitable_hits = [h for h in hits if h.get("duration", 0) >= audio_duration]
         if not suitable_hits:
             print(f"No suitable Storyblocks video found for scene {idx}.")
@@ -160,7 +163,10 @@ def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path):
             continue
 
         downloaded_path = os.path.join(temp_video_dir, f"scene_{idx}.mp4")
-        if not download_video_storyblocks(video_id, downloaded_path):
+        if not download_video_storyblocks(video_id, 
+                                          downloaded_path,
+                                          private_api_key=private_api_key, 
+                                          public_api_key=public_api_key):
             print(f"Failed to download storyblocks scene {idx}.")
             audio_clip.close()
             continue
@@ -218,8 +224,3 @@ def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path):
         vc.close()
     for ac in audio_clips_to_close:
         ac.close()
-
-
-if __name__ == '__main__':
-    #print(search_videos_storyblocks('cat'))
-    download_video_storyblocks(10576789, './output')

@@ -1,18 +1,17 @@
 import json
-import os
 from typing import List, Dict, Optional
 
 from openai import OpenAI
-from dotenv import load_dotenv
 
-
-load_dotenv()
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Initialize the OpenAI client
-client = OpenAI(
-    api_key=OPENAI_API_KEY
-)
+client = None
+
+
+def init_openai_client(api_key):
+    global client
+    client = OpenAI(api_key=api_key)
+    
 
 def call_openai_chat(
     prompt,
