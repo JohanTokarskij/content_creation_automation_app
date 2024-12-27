@@ -24,8 +24,7 @@ from pexels_funcs import process_videos_pexels
 from storyblocks_funcs import process_videos_storyblocks
 from lumaai_funcs import process_videos_luma
 from youtube_funcs import upload_video
-from helper_funcs import (clear_files_in_folder,
-                          sanitize_filename_component, 
+from helper_funcs import (clear_files_in_folder, 
                           get_final_filename, 
                           custom_secure_filename)
 
@@ -49,10 +48,6 @@ def index():
 
 @app.route("/generate_video", methods=["POST"])
 def generate_video():
-    # Clear temporary directories
-    clear_files_in_folder(AUDIO_DIR)
-    clear_files_in_folder(VIDEO_TEMP_DIR)
-
     # Get form data
     user_topic = request.form.get("user_topic", "").strip()
     user_script = request.form.get("user_script", "").strip()
@@ -60,11 +55,49 @@ def generate_video():
     video_source = request.form.get("video_source", "pixabay")
     upload_option = request.form.get("upload_option", "local")
 
-    # Initialize OpenAI client from session key
+    # Check required keys based on user selections
     user_openai_key = session.get("OPENAI_API_KEY", "")
     if not user_openai_key:
-        return render_template("index.html", result_message="No OpenAI API key provided. Please update your Settings.")
+        return render_template("index.html", result_message="No OpenAI API key.")
+
+    if audio_source == "elevenlabs":
+        elevenlabs_key = session.get('ELEVENLABS_API_KEY', '')
+        if not elevenlabs_key:
+            return render_template("index.html", result_message="No ElevenLabs API key.")
+
+    if video_source == "luma":
+        luma_key = session.get('LUMAAI_API_KEY', '')
+        if not luma_key:
+            return render_template("index.html", result_message="No LumaAI API key.")
+
+    if video_source == "pixabay":
+        pixabay_key = session.get('PIXABAY_API_KEY', '')
+        if not pixabay_key:
+            return render_template("index.html", result_message="No Pixabay API key.")
+
+    if video_source == "pexels":
+        pexels_key = session.get('PEXELS_API_KEY', '')
+        if not pexels_key:
+            return render_template("index.html", result_message="No Pexels API key.")
+
+    if video_source == "storyblocks":
+        public_key = session.get('STORYBLOCKS_PUBLIC_API_KEY', '')
+        private_key = session.get('STORYBLOCKS_PRIVATE_API_KEY', '')
+        if not public_key or not private_key:
+            return render_template("index.html", result_message="No Storyblocks keys.")
+
+    if upload_option == "youtube":
+        youtube_secret_json = session.get('YOUTUBE_CLIENT_SECRET', '')
+        if not youtube_secret_json:
+            return render_template("index.html", result_message="No YouTube client_secret.")
+
+    # Initialize OpenAI
     init_openai_client(user_openai_key)
+
+    # Clear temp
+    clear_files_in_folder(AUDIO_DIR)
+    clear_files_in_folder(VIDEO_TEMP_DIR)
+
 
     # Determine main topic
     if user_script and not user_topic:
@@ -92,9 +125,6 @@ def generate_video():
 
     # Generate audio
     if audio_source == "elevenlabs":
-        elevenlabs_key = session.get('ELEVENLABS_API_KEY', '')
-        if not elevenlabs_key:
-            return render_template("index.html", result_message="No ElevenLabs API key provided. Please update your Settings.")
         generate_audio_files_elevenlabs(scripts, AUDIO_DIR, api_key=elevenlabs_key)
     else:
         generate_audio_files_gtts(scripts, AUDIO_DIR)
@@ -104,48 +134,32 @@ def generate_video():
 
     # Generate video
     if video_source == "luma":
-        luma_key = session.get('LUMAAI_API_KEY', '')
-        if not luma_key:
-            return render_template("index.html", result_message="No LumaAI API key provided. Please update your Settings.")
         detailed_prompts = generate_detailed_prompts(scripts)
         process_videos_luma(detailed_prompts, AUDIO_DIR, final_path, api_key=luma_key)
     else:
         search_terms = generate_search_terms(main_topic, scripts)
 
         if video_source == "pexels":
-            pexels_key = session.get('PEXELS_API_KEY', '')
-            if not pexels_key:
-                return render_template("index.html", result_message="No Pexels API key provided. Please update your Settings.")
             process_videos_pexels(scripts, search_terms, AUDIO_DIR, final_path, api_key=pexels_key)
 
         elif video_source == "storyblocks":
-            public_key = session.get('STORYBLOCKS_PUBLIC_API_KEY', '')
-            private_key = session.get('STORYBLOCKS_PRIVATE_API_KEY', '')
-            if not public_key or not private_key:
-                return render_template("index.html", result_message="No Storyblocks API keys provided. Please update your Settings.")
             process_videos_storyblocks(scripts, search_terms, AUDIO_DIR, final_path,
                                        private_api_key=private_key,
                                        public_api_key=public_key)
 
         elif video_source == "pixabay":
-            pixabay_key = session.get('PIXABAY_API_KEY', '')
-            if not pixabay_key:
-                return render_template("index.html", result_message="No Pixabay API key provided. Please update your Settings.")
             process_videos_pixabay(scripts, search_terms, AUDIO_DIR, final_path, api_key=pixabay_key)
         else:
             return render_template("index.html", result_message="Invalid video source selected.")
 
     # Upload to YouTube if selected
     if upload_option == "youtube":
-        youtube_secret_json = session.get('YOUTUBE_CLIENT_SECRET', '')
-        if not youtube_secret_json:
-            return render_template("index.html", 
-                                result_message="No YouTube client_secret provided. Please update your Settings.")
-
+        youtube_title = f"{final_name.replace('.mp4', '')}"
         upload_video(
             video_file_path=final_path,
-            video_name=video_title,
-            youtube_secret_json=youtube_secret_json
+            video_name=youtube_title,
+            youtube_secret_json=youtube_secret_json,
+            video_hashtags=hashtags
         )
 
     # Clear temp files

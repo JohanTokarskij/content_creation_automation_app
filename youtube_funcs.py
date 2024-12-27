@@ -12,9 +12,9 @@ from googleapiclient.http import MediaFileUpload
 from flask import session
 
 
-def upload_video(video_file_path, video_name, youtube_secret_json):
+def upload_video(video_file_path, video_name, youtube_secret_json, video_hashtags=None):
     SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
-    time_now = datetime.datetime.now(pytz.timezone('Europe/Stockholm')).strftime('%Y-%m-%d %H:%M:%S')
+    time_now = datetime.datetime.now(pytz.timezone('Europe/Stockholm')).strftime('%Y-%m-%d %H:%M')
 
     # Try loading token from session if it exists
     creds = None
@@ -53,7 +53,7 @@ def upload_video(video_file_path, video_name, youtube_secret_json):
     video_metadata = {
         'snippet': {
             'title': video_name,
-            'description': f'This is an automated upload using Python at {time_now}',
+            'description': f"This is an automated upload using Python at {time_now}\n\n{' '.join(video_hashtags or [])}",
             'tags': ['python', 'youtube', 'upload'],
             'categoryId': '22'
         },

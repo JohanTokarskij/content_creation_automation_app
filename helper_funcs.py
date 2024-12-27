@@ -63,33 +63,21 @@ def configure_moviepy():
     change_settings({"FFMPEG_BINARY": ffmpeg_path})
 
 
-def sanitize_filename_component(s: str) -> str:
-    """
-    Removes (or substitutes) characters that are unsafe on most file systems.
-    Allows letters, digits, underscores, hyphens, spaces.
-    Strips leading/trailing spaces and collapses multiple spaces to a single space.
-    """
-    # Replace any disallowed chars with ''
-    s = re.sub(r'[^a-zA-Z0-9_\-\s]', '', s)
-    # Collapse multiple spaces into one
-    s = re.sub(r'\s+', ' ', s)
-    # Trim leading/trailing space
-    return s.strip()
-
-
-def get_final_filename(audio_tech: str, video_tech: str, video_title: str) -> str:
-    """
-    Builds a file name
-    """
-    safe_audio = sanitize_filename_component(audio_tech)
-    safe_video = sanitize_filename_component(video_tech)
-    safe_title = sanitize_filename_component(video_title)
-    return f"[{safe_audio}][{safe_video}] {safe_title}.mp4"
-
-
 def custom_secure_filename(filename):
     """
     Sanitizes the filename, allowing brackets while replacing other unsafe characters with underscores.
     """
     # Allow letters, numbers, underscores, hyphens, dots, and brackets
     return re.sub(r'[^A-Za-z0-9_.\-\[\]]+', '_', filename)
+
+
+def get_final_filename(audio_tech: str, video_tech: str, video_title: str) -> str:
+    """
+    Builds a file name
+    """
+    safe_audio = custom_secure_filename(audio_tech)
+    safe_video = custom_secure_filename(video_tech)
+    safe_title = custom_secure_filename(video_title)
+    return f"[{safe_audio}][{safe_video}] {safe_title}.mp4"
+
+
