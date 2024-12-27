@@ -18,7 +18,7 @@ def upload_video(video_file_path, video_name, youtube_secret_json):
 
     # Try loading token from session if it exists
     creds = None
-    token_json = session.get('YOUTUBE_TOKEN', '')  # e.g. stored as a JSON string
+    token_json = session.get('YOUTUBE_TOKEN', '')
 
     if token_json:
         try:
@@ -72,6 +72,3 @@ def upload_video(video_file_path, video_name, youtube_secret_json):
 
     response = request.execute()
     print(f"Video uploaded. Video ID: {response['id']}")
-
-
-#upload_video(YOUTUBE_TOKEN_PATH, YOUTUBE_CLIENT_SECRET_PATH, 'output/[gtts][pexels] Unveiling the Mystery of the Tittle The Dot Over i and j.mp4', "[gtts][pexels] Unveiling the Mystery of the Tittle The Dot Over i and j")
