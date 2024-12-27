@@ -173,3 +173,4 @@ cython_debug/
 ffmpeg_bin/windows
 temp/
 output/
+*.json
