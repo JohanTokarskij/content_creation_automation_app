@@ -3,53 +3,56 @@ import datetime
 import pytz
 import json
 
-import google.auth
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-from flask import session
+from flask import session, flash
 
-
-def upload_video(video_file_path, video_name, youtube_secret_json, video_hashtags=None):
+def upload_video(video_file_path, video_name, video_hashtags=None):
     SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
     time_now = datetime.datetime.now(pytz.timezone('Europe/Stockholm')).strftime('%Y-%m-%d %H:%M')
 
-    # Try loading token from session if it exists
-    creds = None
+    # Retrieve token from session
     token_json = session.get('YOUTUBE_TOKEN', '')
+    
+    if not token_json:
+        print("No stored YouTube credentials.")
+        flash("You need to authorize YouTube in settings.", "error")
+        return False, "No YouTube credentials. Please authorize."
 
-    if token_json:
-        try:
-            creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
-        except Exception as e:
-            print(f"Error parsing stored token from session: {e}")
-            creds = None
+    try:
+        creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
+    except Exception as e:
+        print(f"Error parsing stored token: {e}")
+        flash("Invalid YouTube credentials. Please re-authorize.", "error")
+        return False, "Invalid YouTube credentials."
 
-    # If creds are missing or invalid, do the OAuth flow
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            # If we have an expired token with a refresh_token, just refresh
-            creds.refresh(Request())
-        else:
-            # parse the user-pasted JSON from session
+    # Refresh token if expired
+    if not creds.valid:
+        if creds.expired and creds.refresh_token:
             try:
-                client_secret_data = json.loads(youtube_secret_json)
+                creds.refresh(Request())
+                session['YOUTUBE_TOKEN'] = creds.to_json()
             except Exception as e:
-                print(f"Error parsing client secret JSON: {e}")
-                return
+                print(f"Error refreshing token: {e}")
+                flash("Token refresh failed. Please re-authorize YouTube.", "error")
+                return False, "Token refresh failed. Please re-authorize YouTube."
+        else:
+            print("Credentials are invalid. User needs to authorize again.")
+            flash("Credentials are invalid. Please re-authorize YouTube.", "error")
+            return False, "Credentials are invalid. Please re-authorize YouTube."
 
-            flow = InstalledAppFlow.from_client_config(client_secret_data, SCOPES)
-            creds = flow.run_local_server(port=0)
+    # Build YouTube client
+    try:
+        youtube = build('youtube', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Error building YouTube client: {e}")
+        flash("Failed to build YouTube client.", "error")
+        return False, "Failed to build YouTube client."
 
-        # Save the new or refreshed creds to session
-        session['YOUTUBE_TOKEN'] = creds.to_json()
-
-    # Build the YouTube API client
-    youtube = build('youtube', 'v3', credentials=creds)
-
-    # Define the video metadata
+    # Define video metadata
     video_metadata = {
         'snippet': {
             'title': video_name,
@@ -62,7 +65,7 @@ def upload_video(video_file_path, video_name, youtube_secret_json, video_hashtag
         }
     }
 
-    # Upload the video
+    # Upload video
     media = MediaFileUpload(video_file_path, chunksize=-1, resumable=True)
     request = youtube.videos().insert(
         part='snippet,status',
@@ -70,5 +73,14 @@ def upload_video(video_file_path, video_name, youtube_secret_json, video_hashtag
         media_body=media
     )
 
-    response = request.execute()
-    print(f"Video uploaded. Video ID: {response['id']}")
+    try:
+        response = request.execute()
+        print(f"Video uploaded. Video ID: {response['id']}")
+        # flash(f"Video uploaded successfully! Video ID: {response['id']}", "success")
+        video_id = response['id']
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        return True, video_url
+    except Exception as e:
+        print(f"Error uploading video: {e}")
+        flash(f"Error uploading video: {e}", "error")
+        return False, str(e)

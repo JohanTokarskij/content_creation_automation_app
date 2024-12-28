@@ -170,7 +170,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-ffmpeg_bin/windows
+# Exclude all .exe files
+*.exe
+
+# Don't ignore the ffmpeg_bin/windows/ folder
+!ffmpeg_bin/windows/
 temp/
 output/
 *.json

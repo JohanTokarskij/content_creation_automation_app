@@ -73,6 +73,12 @@ Install the required Python packages using requirements.txt.
 pip install -r requirements.txt
 ```
 
+5. Download FFMPEG binaries
+Download FFMPEG binaries from `https://ffbinaries.com/downloads`:
+- for Windows download ffmpeg.exe and place it inside `ffmpeg_bin/windows` of the working directory
+- for Linux download ffmpeg and place it inside `ffmpeg/linux` of the working directory
+
+
 ## Run the Application
 Start the Flask application by running:
 

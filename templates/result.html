@@ -99,6 +99,35 @@
       color: red;
       font-weight: 500;
     }
+
+    .success-message {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      border-radius: 4px;
+    }
+    .success-message h2 {
+      margin-bottom: 10px;
+    }
+    .success-message p {
+      margin: 0;
+    }
+
+    .youtube-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+
+    .youtube-link:hover {
+      background-color: #218838;
+    }
   </style>
 </head>
 <body>
@@ -111,7 +140,12 @@
   <div class="container">
     <h1>Video Generated Successfully!</h1>
 
-    {% if download_url %}
+    {% if upload_to_youtube %}
+    <p>Your video has been uploaded to YouTube. Watch it here: 
+      <a href="{{ youtube_video_url }}" class="youtube-link" target="_blank">{{ youtube_video_url }}</a>
+    </p>
+  </div>
+    {% elif download_url %}
       <div class="download-link">
         <a href="{{ download_url }}">Download Your Video</a>
       </div>

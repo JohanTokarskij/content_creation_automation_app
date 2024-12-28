@@ -1,3 +1,4 @@
+<!-- templates/settings.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,6 +155,80 @@
     input[type="radio"] {
       margin-right: 5px;
     }
+
+    /* Additional styles for YouTube Authorization */
+    .auth-section {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+    }
+
+    .auth-section h2 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .auth-section button {
+      padding: 8px 16px;
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .auth-section button:hover {
+      background-color: #357AE8;
+    }
+
+    .auth-link {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .auth-link a {
+      color: #4285F4;
+      text-decoration: none;
+    }
+
+    .auth-link a:hover {
+      text-decoration: underline;
+    }
+
+    .submit-code-button {
+      padding: 8px 16px;
+      background-color: #34A853;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+
+    .submit-code-button:hover {
+      background-color: #2C8E46;
+    }
+
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
   </style>
 </head>
 <body>
@@ -168,41 +243,123 @@
     <form method="POST" action="/update_settings">
       <div class="form-group">
         <label for="elevenlabs_api">ElevenLabs API Key:</label>
-        <input type="text" id="elevenlabs_api" name="elevenlabs_api" value="{{ elevenlabs_api }}"><br><br>
+        <input type="text" id="elevenlabs_api" name="elevenlabs_api" value="{{ elevenlabs_api }}">
       </div>
       <div class="form-group">
         <label for="openai_api">OpenAI API Key:</label>
-        <input type="text" id="openai_api" name="openai_api" value="{{ openai_api }}"><br><br>
+        <input type="text" id="openai_api" name="openai_api" value="{{ openai_api }}">
       </div>
       <div class="form-group">
         <label for="pixabay_api">Pixabay API Key:</label>
-        <input type="text" id="pixabay_api" name="pixabay_api" value="{{ pixabay_api }}"><br><br>
+        <input type="text" id="pixabay_api" name="pixabay_api" value="{{ pixabay_api }}">
       </div>
       <div class="form-group">
         <label for="pexels_api">Pexels API Key:</label>
-        <input type="text" id="pexels_api" name="pexels_api" value="{{ pexels_api }}"><br><br>
+        <input type="text" id="pexels_api" name="pexels_api" value="{{ pexels_api }}">
       </div>
       <div class="form-group">
         <label for="storyblocks_public">Storyblocks Public API Key:</label>
-        <input type="text" id="storyblocks_public" name="storyblocks_public" value="{{ storyblocks_public }}"><br><br>
+        <input type="text" id="storyblocks_public" name="storyblocks_public" value="{{ storyblocks_public }}">
       </div>
       <div class="form-group">
         <label for="storyblocks_private">Storyblocks Private API Key:</label>
-        <input type="text" id="storyblocks_private" name="storyblocks_private" value="{{ storyblocks_private }}"><br><br>
+        <input type="text" id="storyblocks_private" name="storyblocks_private" value="{{ storyblocks_private }}">
       </div>
       <div class="form-group">
         <label for="luma_api">LumaAI API Key:</label>
-        <input type="text" id="luma_api" name="luma_api" value="{{ luma_api }}"><br><br>
+        <input type="text" id="luma_api" name="luma_api" value="{{ luma_api }}">
       </div>
       <div class="form-group">
-        <label for="youtube_client_secret">YouTube client_secret.json content:</label>
+        <label for="youtube_client_secret">YouTube `client_secret.json` Content:</label>
         <textarea id="youtube_client_secret" name="youtube_client_secret" rows="6" cols="60">{{ youtube_client_secret }}</textarea>
       </div>
+
+      <!-- YouTube Authorization Section -->
+      <div class="auth-section">
+        <h2>YouTube Authorization</h2>
+        <button type="button" onclick="generateAuthUrl()">Generate Authorization URL</button>
+        <div class="auth-link" id="auth_link"></div>
+        <label for="youtube_auth_code">Authorization Code:</label>
+        <input type="text" id="youtube_auth_code" name="youtube_auth_code">
+        <button type="button" class="submit-code-button" onclick="submitAuthCode()">Submit Authorization Code</button>
+        <div id="auth_message"></div>
+      </div>
+
+      <!-- Submit and Cancel Buttons -->
       <div class="center">
         <button class="generate-button" type="submit">Save Settings</button>
         <button class="generate-button" type="button" onclick="window.location.href='/'">Cancel</button>
       </div>
     </form>
   </div>
+
+  <script>
+    function generateAuthUrl() {
+      const clientSecret = document.getElementById('youtube_client_secret').value.trim();
+      if (!clientSecret) {
+        displayMessage('Please paste your YouTube client_secret.json content first.', 'error');
+        return;
+      }
+
+      fetch('/get_youtube_auth_url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_secret: clientSecret })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.auth_url) {
+            document.getElementById('auth_link').innerHTML = `<a href="${data.auth_url}" target="_blank">Authorize YouTube</a>`;
+          } else {
+            document.getElementById('auth_link').innerHTML = `<span style="color: red;">Error generating authorization URL: ${data.message}</span>`;
+          }
+        })
+        .catch(error => {
+          document.getElementById('auth_link').innerHTML = `<span style="color: red;">Error: ${error}</span>`;
+        });
+    }
+
+    function submitAuthCode() {
+      const code = document.getElementById('youtube_auth_code').value.trim();
+      const clientSecret = document.getElementById('youtube_client_secret').value.trim();
+
+      if (!code) {
+        displayMessage('Please enter the authorization code.', 'error');
+        return;
+      }
+
+      if (!clientSecret) {
+        displayMessage('Please paste your YouTube client_secret.json content first.', 'error');
+        return;
+      }
+
+      fetch('/submit_youtube_auth_code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          code: code,
+          client_secret: clientSecret 
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            displayMessage(data.message, 'success');
+            document.getElementById('auth_link').innerHTML = '';
+            document.getElementById('youtube_auth_code').value = '';
+          } else {
+            displayMessage(data.message, 'error');
+          }
+        })
+        .catch(error => {
+          displayMessage(`Error: ${error}`, 'error');
+        });
+    }
+
+    function displayMessage(message, type) {
+      const messageDiv = document.getElementById('auth_message');
+      messageDiv.innerHTML = `<div class="message ${type}">${message}</div>`;
+    }
+  </script>
 </body>
 </html>
