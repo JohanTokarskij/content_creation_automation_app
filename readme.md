@@ -88,6 +88,7 @@ python app.py
 
 ## Access the Application
 Open your web browser and navigate to `http://127.0.0.1:5000/` to use the app.
+![Application's index.html](img/index.png)
 
 ## Setup API Keys
 
@@ -98,16 +99,35 @@ In order to run the application, you need to obtain API keys from the following 
 - [Pixabay API](https://pixabay.com/api/docs/)  
 - [Pexels API](https://www.pexels.com/api/)  
 - [Storyblocks API](https://www.storyblocks.com/resources/business-solutions/api/)  
-- [Luma AI API](https://docs.lumalabs.ai/docs/api/)  
-- [YouTube API](https://developers.google.com/youtube/v3/)   
+- [Luma AI API](https://docs.lumalabs.ai/docs/api/)    
 
 ### How to Use API Keys
 
 1. Navigate to the **Settings** page in the application.
 2. Paste your API keys into the corresponding fields for each service.
-3. For YouTube uploads, obtain a `client_secret.json` file from your Google Cloud Console and upload it during setup.
 
 **Important:** API keys are not stored permanently. They are temporarily held in the session and will expire when the session ends or when the server restarts. Ensure to re-enter them as needed.
+
+### YouTube OAuth Setup
+**Obtain `client_secret.json`:**
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project or select an existing one.
+3. Navigate to **APIs & Services** > **Credentials**.
+4. Click on **Create Credentials** > **OAuth client ID**.
+5. Choose **Web application** and set the appropriate authorized redirect URIs (e.g., `http://localhost:5000/`).
+6. Download the `client_secret.json` file.
+
+**Setup `client_secret.json`:**
+1. In the **Settings** page of the application, locate the YouTube section.
+2. Paste the content of the `client_secret.json` file into the designated YouTube section.
+
+**Authorize YouTube:**
+1. After pasting the content of `client_secret.json`, click on the **Generate Authorization URL** button.
+2. You will be redirected to Google's OAuth consent screen. Log in and grant the necessary permissions.
+3. You will receive an authorization code.
+4. Paste the authorization code back into the application when prompted.
+5. Press **Submit Authorization Code**.
+6. Click on **Save Settings** to finalize the setup.
 
 ## Deployment to Azure Virtual Machine
 
