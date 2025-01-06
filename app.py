@@ -1,6 +1,7 @@
 import os
 import threading
 import json
+from typing import Any, Dict, Optional
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from flask import (Flask, 
@@ -11,7 +12,8 @@ from flask import (Flask,
                    url_for, 
                    session, 
                    jsonify, 
-                   flash)
+                   flash,
+                   Response)
 
 from openai_funcs import (
     init_openai_client,
@@ -30,7 +32,8 @@ from lumaai_funcs import process_videos_luma
 from youtube_funcs import upload_video
 from helper_funcs import (clear_files_in_folder, 
                           get_final_filename, 
-                          custom_secure_filename)
+                          custom_secure_filename,
+                          delete_file)
 
 
 # Flask app initialization
@@ -47,12 +50,28 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(VIDEO_TEMP_DIR, exist_ok=True)
 os.makedirs(FINAL_DIR, exist_ok=True)
 
+
 @app.route("/", methods=["GET"])
-def index():
+def index() -> Response:
+    """
+    Renders the home page.
+
+    Returns:
+        Response: Rendered HTML of the index page.
+    """
     return render_template("index.html")
 
+
 @app.route("/generate_video", methods=["POST"])
-def generate_video():
+def generate_video() -> Response:
+    """
+    Handles the video generation process based on user input and selected options.
+
+    Processes form data, generates scripts, audio, and video, and handles uploading if selected.
+
+    Returns:
+        Response: Redirects to the result page or renders the index with error messages.
+    """
     # Get form data
     user_topic = request.form.get("user_topic", "").strip()
     user_script = request.form.get("user_script", "").strip()
@@ -91,9 +110,9 @@ def generate_video():
             return render_template("index.html")
 
     if video_source == "storyblocks":
-        public_key = session.get('STORYBLOCKS_PUBLIC_API_KEY', '')
-        private_key = session.get('STORYBLOCKS_PRIVATE_API_KEY', '')
-        if not public_key or not private_key:
+        storyblocks_public_key = session.get('STORYBLOCKS_PUBLIC_API_KEY', '')
+        storyblocks_private_key = session.get('STORYBLOCKS_PRIVATE_API_KEY', '')
+        if not storyblocks_public_key or not storyblocks_private_key:
             flash("No Storyblocks keys.", "error")
             return render_template("index.html")
 
@@ -155,8 +174,8 @@ def generate_video():
 
         elif video_source == "storyblocks":
             process_videos_storyblocks(scripts, search_terms, AUDIO_DIR, final_path,
-                                       private_api_key=private_key,
-                                       public_api_key=public_key)
+                                       private_api_key=storyblocks_private_key,
+                                       public_api_key=storyblocks_public_key)
 
         elif video_source == "pixabay":
             process_videos_pixabay(scripts, search_terms, AUDIO_DIR, final_path, api_key=pixabay_key)
@@ -183,21 +202,30 @@ def generate_video():
             return render_template("index.html")
         
         # Delete the file immediately after uploading to YouTube
-        delete_file(secure_name)
+        delete_file(final_path)
         
         # Redirect to result without providing a download link
         return redirect(url_for('result', upload_to_youtube=upload_to_youtube, youtube_video_url=message))
     else:
         # Generate download link and start timer to delete the file after 60 seconds
         download_url = url_for('download_file', filename=secure_name)
-        timer = threading.Timer(60, delete_file, args=[secure_name])
+        timer = threading.Timer(60, delete_file, args=[final_path])
         timer.start()
 
         # Redirect to result with download link
         return redirect(url_for('result', filename=secure_name, upload_to_youtube=upload_to_youtube))
 
+
 @app.route("/result", methods=["GET"])
-def result():
+def result() -> Response:
+    """
+    Displays the result of the video generation process.
+
+    Shows download links or YouTube video URLs based on user actions.
+
+    Returns:
+        Response: Rendered HTML of the result page.
+    """
     # Get 'filename' and 'upload_to_youtube' from query parameters
     filename = request.args.get('filename', default=None, type=str)
     upload_to_youtube = request.args.get('upload_to_youtube', 'false').lower() == 'true'
@@ -212,8 +240,18 @@ def result():
         flash("Invalid request parameters.", "error")
         return render_template("result.html", error_message="Invalid request parameters.")
 
+
 @app.route("/download/<filename>", methods=["GET"])
-def download_file(filename):
+def download_file(filename: str) -> Response:
+    """
+    Serves the generated video file for download.
+
+    Args:
+        filename (str): The name of the file to download.
+
+    Returns:
+        Response: The file sent as an attachment or an error message if not found.
+    """
     secure_name = custom_secure_filename(filename)
     file_path = os.path.join(FINAL_DIR, secure_name)
     if not os.path.exists(file_path):
@@ -221,8 +259,17 @@ def download_file(filename):
         return render_template("result.html", download_url=None, error_message="File not found or has been deleted.")
     return send_from_directory(FINAL_DIR, secure_name, as_attachment=True)
 
+
 @app.route("/update_settings", methods=["POST"])
-def update_settings():
+def update_settings() -> Response:
+    """
+    Updates API keys and YouTube client secrets based on user input.
+
+    Stores the provided keys in the session.
+
+    Returns:
+        Response: Redirects to the settings page.
+    """
     # Store API keys and YouTube client_secret in session
     session['ELEVENLABS_API_KEY'] = request.form.get('elevenlabs_api', '').strip()
     session['OPENAI_API_KEY'] = request.form.get('openai_api', '').strip()
@@ -234,8 +281,15 @@ def update_settings():
     session['YOUTUBE_CLIENT_SECRET'] = request.form.get('youtube_client_secret', '').strip()
     return redirect(url_for('settings'))
 
+
 @app.route("/settings", methods=["GET"])
-def settings():
+def settings() -> Response:
+    """
+    Renders the settings page with current API key values.
+
+    Returns:
+        Response: Rendered HTML of the settings page.
+    """
     # Pass current session values to the template
     return render_template(
         "settings.html",
@@ -249,8 +303,17 @@ def settings():
         youtube_client_secret=session.get('YOUTUBE_CLIENT_SECRET','')
     )
 
+
 @app.route("/get_youtube_auth_url", methods=["POST"])
-def get_youtube_auth_url():
+def get_youtube_auth_url() -> Response:
+    """
+    Generates and returns the YouTube authorization URL for OAuth flow.
+
+    Expects a JSON payload with the YouTube client_secret.
+
+    Returns:
+        Response: JSON containing the authorization URL or an error message.
+    """
     data = request.get_json()
     client_secret_json = data.get('client_secret', '').strip()
     if not client_secret_json:
@@ -272,8 +335,17 @@ def get_youtube_auth_url():
     )
     return jsonify({'auth_url': auth_url})
 
+
 @app.route("/submit_youtube_auth_code", methods=["POST"])
-def submit_youtube_auth_code():
+def submit_youtube_auth_code() -> Response:
+    """
+    Handles the submission of the YouTube authorization code.
+
+    Exchanges the code for tokens and stores them in the session.
+
+    Returns:
+        Response: JSON indicating success or failure of the authorization.
+    """
     data = request.get_json()
     code = data.get('code', '').strip()
     client_secret_json = data.get('client_secret', '').strip()
@@ -302,14 +374,6 @@ def submit_youtube_auth_code():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Authorization failed: {str(e)}'}), 400
 
-def delete_file(filename):
-    try:
-        file_path = os.path.join(FINAL_DIR, filename)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"Deleted file: {file_path}")
-    except Exception as e:
-        print(f"Error deleting file {filename}: {e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

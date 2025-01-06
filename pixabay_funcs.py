@@ -1,5 +1,6 @@
 import os
 from urllib.parse import urlencode
+from typing import List, Dict, Any
 
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
@@ -8,9 +9,24 @@ from moviepy.video.fx.all import crop
 from helper_funcs import configure_moviepy
 
 
-def search_videos_pixabay(search_term, safesearch=True, api_key=None):
+def search_videos_pixabay(
+    search_term: str,
+    safesearch: bool,
+    api_key: str
+) -> List[Dict[str, Any]]:
     """
-    Search for videos on Pixabay by 'search_term'. Returns a list of video data dicts.
+    Search for videos on Pixabay using the specified search term.
+
+    This function queries the Pixabay API for videos that match the given keyword. It
+    allows for safe search filtering and limits the number of results per page.
+
+    Args:
+        search_term (str): The keyword to search for in Pixabay videos.
+        safesearch (bool): Enable or disable safe search. Defaults to True.
+        api_key (str): The Pixabay API key for authentication.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing video data.
     """
     base_url = 'https://pixabay.com/api/videos/'
     params = {
@@ -31,9 +47,22 @@ def search_videos_pixabay(search_term, safesearch=True, api_key=None):
         return []
 
 
-def download_video_pixabay(video_data, output_path):
+def download_video_pixabay(
+    video_data: Dict[str, Any],
+    output_path: str
+) -> bool:
     """
-    Downloads a single Pixabay video to 'output_path'.
+    Download a single Pixabay video to the specified output path.
+
+    This function retrieves the video URL from the provided video data and downloads
+    the video file, saving it to the designated location on the local file system.
+
+    Args:
+        video_data (Dict[str, Any]): A dictionary containing information about the Pixabay video.
+        output_path (str): The file system path where the downloaded video will be saved.
+
+    Returns:
+        bool: True if the download was successful, False otherwise.
     """
     try:
         medium_info = video_data.get('videos', {}).get('medium', {})
@@ -55,9 +84,29 @@ def download_video_pixabay(video_data, output_path):
         return False
 
 
-def process_videos_pixabay(scripts, search_terms, audio_dir, output_path, api_key=None):
+def process_videos_pixabay(
+    scripts: List[str],
+    search_terms: List[str],
+    audio_dir: str,
+    output_path: str,
+    api_key: str
+) -> None:
     """
-    Creates a single final video at 'output_path' from the given scripts/search terms.
+    Create a final video by processing multiple Pixabay videos and corresponding audio files.
+
+    This function performs the following steps:
+    1. Configures MoviePy settings.
+    2. Searches for Pixabay videos based on provided search terms and scripts.
+    3. Downloads selected videos.
+    4. Synchronizes videos with corresponding audio files.
+    5. Concatenates all processed video clips into a single final output video.
+
+    Args:
+        scripts (List[str]): A list of script texts for each scene.
+        search_terms (List[str]): A list of search terms corresponding to each script.
+        audio_dir (str): Directory containing audio files for each scene.
+        output_path (str): The file system path where the final video will be saved.
+        api_key (str): The Pixabay API key for authentication.
     """
     configure_moviepy()
     temp_folder = 'temp'

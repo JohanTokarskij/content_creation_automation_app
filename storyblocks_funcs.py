@@ -3,6 +3,7 @@ import time
 import hmac
 import hashlib
 from urllib.parse import urlencode
+from typing import Optional, List, Dict, Any
 
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
@@ -14,7 +15,18 @@ from helper_funcs import configure_moviepy
 BASE_URL = "https://api.storyblocks.com"
 
 
-def generate_hmac(private_key, resource, expires):
+def generate_hmac(private_key: str, resource: str, expires: str) -> str:
+    """
+    Generate an HMAC signature using the provided private key, resource, and expiration time.
+
+    Args:
+        private_key (str): The private key used for HMAC generation.
+        resource (str): The resource string for which the HMAC is generated.
+        expires (str): The expiration timestamp as a string.
+
+    Returns:
+        str: The hexadecimal representation of the HMAC signature.
+    """
     message = private_key + expires
     hmac_builder = hmac.new(
         bytearray(message, 'utf-8'),
@@ -24,9 +36,24 @@ def generate_hmac(private_key, resource, expires):
     return hmac_builder.hexdigest()
 
 
-def search_videos_storyblocks(search_term, min_duration=None, per_page=10, private_api_key=None, public_api_key=None):
+def search_videos_storyblocks(
+    search_term: str,
+    min_duration: int,
+    private_api_key: str,
+    public_api_key: str
+) -> List[Dict[str, Any]]:
     """
-    Search Storyblocks by keyword. Filter by min_duration (seconds) if provided.
+    Search Storyblocks for videos matching the given keyword. Optionally filter by minimum duration.
+
+    Args:
+        search_term (str): The keyword to search for in Storyblocks.
+        min_duration (int, optional): Minimum duration of videos in seconds. Defaults to None.
+        per_page (int, optional): Number of results per page. Defaults to 10.
+        private_api_key (str): Private API key for authentication.
+        public_api_key (str): Public API key for authentication.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing video information.
     """
     search_resource = "/api/v2/videos/search"
     expires = str(int(time.time()) + 3600)
@@ -56,9 +83,23 @@ def search_videos_storyblocks(search_term, min_duration=None, per_page=10, priva
         return []
 
 
-def download_video_storyblocks(video_id, output_path, private_api_key=None, public_api_key=None):
+def download_video_storyblocks(
+    video_id: str,
+    output_path: str,
+    private_api_key: str,
+    public_api_key: str
+) -> bool:
     """
-    Download a Storyblocks video by video_id and write it to output_path.
+    Download a Storyblocks video by its video ID and save it to the specified output path.
+
+    Args:
+        video_id (str): The unique identifier of the Storyblocks video to download.
+        output_path (str): The file system path where the downloaded video will be saved.
+        private_api_key (str): Private API key for authentication.
+        public_api_key (str): Public API key for authentication.
+
+    Returns:
+        bool: True if the download was successful, False otherwise.
     """
     download_resource = f"/api/v2/videos/stock-item/download/{video_id}"
     expires = str(int(time.time()) + 3600)
@@ -112,10 +153,28 @@ def download_video_storyblocks(video_id, output_path, private_api_key=None, publ
         return False
 
 
-def process_videos_storyblocks(scripts, search_terms, audio_dir, output_path,
-                               private_api_key=None, public_api_key=None):
+def process_videos_storyblocks(
+    scripts: List[str],
+    search_terms: List[str],
+    audio_dir: str,
+    output_path: str,
+    private_api_key: str,
+    public_api_key: str
+) -> None:
     """
-    Creates a single final video at 'output_path' from the given scripts & search terms.
+    Create a final video by processing multiple Storyblocks videos and corresponding audio files.
+
+    This function searches for videos on Storyblocks based on the provided search terms and scripts,
+    downloads the selected videos, synchronizes them with audio files, and concatenates them into
+    a single output video.
+
+    Args:
+        scripts (List[str]): A list of script texts for each scene.
+        search_terms (List[str]): A list of search terms corresponding to each script.
+        audio_dir (str): Directory containing audio files for each scene.
+        output_path (str): The file system path where the final video will be saved.
+        private_api_key (str): Private API key for authentication.
+        public_api_key (str): Public API key for authentication.
     """
     configure_moviepy()
     temp_folder = "temp"

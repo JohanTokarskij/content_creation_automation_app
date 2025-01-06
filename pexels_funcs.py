@@ -4,9 +4,28 @@ import requests
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 from moviepy.video.fx.all import crop
 from helper_funcs import configure_moviepy
+from typing import List, Dict, Any, Optional
 
 
-def search_videos_pexels(search_term, min_duration=None, api_key=None):
+def search_videos_pexels(
+    search_term: str,
+    min_duration: int,
+    api_key: str
+) -> List[Dict[str, Any]]:
+    """
+    Search for videos on Pexels using the specified search term.
+
+    This function queries the Pexels API for videos that match the given keyword. It
+    allows for filtering by minimum duration and limits the number of results per page.
+
+    Args:
+        search_term (str): The keyword to search for in Pexels videos.
+        min_duration (int): Minimum duration of videos in seconds.
+        api_key (str): The Pexels API key for authentication.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing video data.
+    """
     base_url = "https://api.pexels.com/videos/search"
     params = {
         "query": search_term,
@@ -28,7 +47,24 @@ def search_videos_pexels(search_term, min_duration=None, api_key=None):
         print(f"Error searching Pexels videos: {e}")
         return []
 
-def download_video_pexels(video_data, output_path):
+
+def download_video_pexels(
+    video_data: Dict[str, Any],
+    output_path: str
+) -> bool:
+    """
+    Download a single Pexels video to the specified output path.
+
+    This function retrieves the video URL from the provided video data and downloads
+    the video file, saving it to the designated location on the local file system.
+
+    Args:
+        video_data (Dict[str, Any]): A dictionary containing information about the Pexels video.
+        output_path (str): The file system path where the downloaded video will be saved.
+
+    Returns:
+        bool: True if the download was successful, False otherwise.
+    """
     try:
         video_files = video_data.get("video_files", [])
         video_files.sort(
@@ -57,9 +93,30 @@ def download_video_pexels(video_data, output_path):
         print(f"Error downloading Pexels video: {e}")
         return False
 
-def process_videos_pexels(scripts, search_terms, audio_dir, output_path, api_key=None):
+
+def process_videos_pexels(
+    scripts: List[str],
+    search_terms: List[str],
+    audio_dir: str,
+    output_path: str,
+    api_key: str
+) -> None:
     """
-    Generates a single final video at 'output_path' from the given scripts/search terms.
+    Create a final video by processing multiple Pexels videos and corresponding audio files.
+
+    This function performs the following steps:
+    1. Configures MoviePy settings.
+    2. Searches for Pexels videos based on provided search terms and scripts.
+    3. Downloads selected videos.
+    4. Synchronizes videos with corresponding audio files.
+    5. Concatenates all processed video clips into a single final output video.
+
+    Args:
+        scripts (List[str]): A list of script texts for each scene.
+        search_terms (List[str]): A list of search terms corresponding to each script.
+        audio_dir (str): Directory containing audio files for each scene.
+        output_path (str): The file system path where the final video will be saved.
+        api_key (str): The Pexels API key for authentication.
     """
     configure_moviepy()
     temp_folder = "temp"

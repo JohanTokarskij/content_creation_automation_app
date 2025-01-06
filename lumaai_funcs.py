@@ -1,12 +1,31 @@
 import os
 import time
+from typing import List, Dict, Optional, Any, Union
 
 import requests
 from lumaai import LumaAI
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips, vfx
 
 
-def _poll_generation(client, generation_id, max_retries=3):
+def poll_generation(client: LumaAI, generation_id: str, max_retries: int = 3) -> Any:
+    """
+    Polls the LumaAI generation status until it is completed or fails.
+    
+    This function repeatedly checks the status of a video generation request. If the generation
+    is completed, it returns the generation object. If it fails, it retries up to a specified
+    number of times before raising an error.
+    
+    Args:
+        client (LumaAI): The LumaAI client instance used to interact with the API.
+        generation_id (str): The unique identifier of the generation request.
+        max_retries (int, optional): The maximum number of retries allowed if the generation fails. Defaults to 3.
+    
+    Returns:
+        Any: The completed generation object.
+    
+    Raises:
+        RuntimeError: If the generation fails after the maximum number of retries.
+    """
     retries = 0
     while True:
         generation = client.generations.get(id=generation_id)
@@ -24,7 +43,20 @@ def _poll_generation(client, generation_id, max_retries=3):
         time.sleep(3)
 
 
-def _download_luma_video(generation, output_path):
+def download_luma_video(generation: Any, output_path: str) -> bool:
+    """
+    Downloads the generated LumaAI video to the specified output path.
+    
+    This function retrieves the video URL from the generation object and downloads the video
+    file, saving it to the designated location on the local file system.
+    
+    Args:
+        generation (Any): The generation object containing information about the video.
+        output_path (str): The file system path where the downloaded video will be saved.
+    
+    Returns:
+        bool: True if the download was successful, False otherwise.
+    """
     video_url = generation.assets.video
     response = requests.get(video_url, stream=True)
     response.raise_for_status()
@@ -35,13 +67,33 @@ def _download_luma_video(generation, output_path):
     print(f"File downloaded as {output_path}")
 
 
-def generate_luma_video(prompt, aspect_ratio="9:16", max_retries=3, api_key=None):
+def generate_luma_video(
+    prompt: str,
+    aspect_ratio: str = "9:16",
+    max_retries: int = 3,
+    api_key: str = None
+) -> Optional[Any]:
+    """
+    Generates a LumaAI video based on the provided prompt.
+    
+    This function sends a prompt to the LumaAI API to generate a video clip with the specified
+    aspect ratio. It handles retries in case of failures and returns the generation object upon success.
+    
+    Args:
+        prompt (str): The text prompt describing the desired video content.
+        aspect_ratio (str, optional): The aspect ratio for the generated video (e.g., "9:16"). Defaults to "9:16".
+        max_retries (int, optional): The maximum number of retries allowed if the generation fails. Defaults to 3.
+        api_key (str): The API key for authenticating with LumaAI. Defaults to None.
+    
+    Returns:
+        Optional[Any]: The completed generation object if successful, or None if all retries fail.
+    """
     client = LumaAI(auth_token=api_key)
     retries = 0
     while retries < max_retries:
         try:
             generation = client.generations.create(prompt=prompt, aspect_ratio=aspect_ratio)
-            generation = _poll_generation(client, generation.id, max_retries=max_retries)
+            generation = poll_generation(client, generation.id, max_retries=max_retries)
             return generation
         except Exception as e:
             retries += 1
@@ -93,7 +145,7 @@ def process_videos_luma(detailed_prompts, audio_dir, output_path, max_retries=3,
 
         # Download the ~5s Luma clip
         downloaded_path = os.path.join(temp_video_dir, f"scene_{idx}_{generation.id}.mp4")
-        _download_luma_video(generation, downloaded_path)
+        download_luma_video(generation, downloaded_path)
 
         try:
             luma_clip = VideoFileClip(downloaded_path)

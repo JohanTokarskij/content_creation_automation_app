@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Union
 
 from openai import OpenAI
 
@@ -8,33 +8,50 @@ from openai import OpenAI
 client = None
 
 
-def init_openai_client(api_key):
+def init_openai_client(api_key: str) -> None:
+    """
+    Initializes the OpenAI client with the provided API key.
+    
+    This function sets up the global OpenAI client instance, which is used for making API calls.
+    
+    Args:
+        api_key (str): The OpenAI API key for authentication.
+    
+    Returns:
+        None
+    """
     global client
     client = OpenAI(api_key=api_key)
     
 
 def call_openai_chat(
-    prompt,
-    model="gpt-4o",
-    max_tokens=1600,
-    temperature=0.7,
-    functions=None,
-    function_call=None,
-):
+    prompt: str,
+    model: str = "gpt-4o",
+    max_tokens: int = 1600,
+    temperature: float = 0.7,
+    functions: Optional[List[Dict[str, Any]]] = None,
+    function_call: Optional[Dict[str, Any]] = None,
+) -> Union[Dict[str, Any], str, None]:
     """
     Calls the OpenAI Chat API and supports structured outputs with functions.
     
+    This function sends a prompt to the OpenAI Chat API and handles both standard text completions
+    and structured outputs using function calls.
+    
     Args:
         prompt (str): The input prompt to the model.
-        model (str): The model name to use.
-        max_tokens (int): The maximum tokens for the response.
-        temperature (float): Sampling temperature.
-        functions (list): List of function definitions for structured output.
-        function_call (dict): Optional function call specification.
+        model (str, optional): The model name to use. Defaults to "gpt-4o".
+        max_tokens (int, optional): The maximum tokens for the response. Defaults to 1600.
+        temperature (float, optional): Sampling temperature. Defaults to 0.7.
+        functions (Optional[List[Dict[str, Any]]], optional): 
+            List of function definitions for structured output. Defaults to None.
+        function_call (Optional[Dict[str, Any]], optional): 
+            Optional function call specification. Defaults to None.
     
     Returns:
-        dict or str: Returns a structured response as a dictionary if functions are used, 
-                     or a string for normal text completions.
+        Union[Dict[str, Any], str, None]: 
+            Returns a structured response as a dictionary if functions are used, 
+            a string for normal text completions, or None if an error occurs.
     """
     try:
         # Build the base request
@@ -251,7 +268,7 @@ def generate_search_terms(video_topic: str, scripts: List[str]) -> List[str]:
     return response.get("search_terms", [])
 
 
-def generate_detailed_prompts(scenes: list):
+def generate_detailed_prompts(scenes: List[str]) -> List[str]:
     """
     Takes a list of short scene descriptions and returns a list of more detailed prompts,
     suitable for Luma AI generation.

@@ -2,6 +2,7 @@ import os
 import datetime
 import pytz
 import json
+from typing import Optional, List, Tuple
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -10,7 +11,23 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from flask import session, flash
 
-def upload_video(video_file_path, video_name, video_hashtags=None):
+def upload_video(
+    video_file_path: str,
+    video_name: str,
+    video_hashtags: Optional[List[str]] = None
+) -> Tuple[bool, str]:
+    """
+    Uploads a video to YouTube.
+
+    Args:
+        video_file_path (str): The file path to the video to be uploaded.
+        video_name (str): The name/title of the video.
+        video_hashtags (Optional[List[str]]): A list of hashtags associated with the video.
+
+    Returns:
+        Tuple[bool, str]: A tuple where the first element is a boolean indicating success,
+                          and the second element is either the video URL on success or an error message on failure.
+    """
     SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
     time_now = datetime.datetime.now(pytz.timezone('Europe/Stockholm')).strftime('%Y-%m-%d %H:%M')
 

@@ -1,9 +1,25 @@
 import os
+from typing import List
 
 import requests
 
 
-def generate_audio_files_elevenlabs(scripts, output_dir, api_key=None):
+def generate_audio_files_elevenlabs(
+    scripts: List[str],
+    output_dir: str,
+    api_key: str
+) -> None:
+    """
+    Generates MP3 audio files for each script using the ElevenLabs Text-to-Speech API.
+
+    Args:
+        scripts (List[str]): A list of script texts to convert to audio.
+        output_dir (str): The directory where the audio files will be saved.
+        api_key (str): The API key for ElevenLabs.
+
+    Returns:
+        None
+    """
     CHUNK_SIZE = 1024
     VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'
     URL_TEMPLATE = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
