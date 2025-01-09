@@ -93,8 +93,8 @@ def custom_secure_filename(filename: str) -> str:
     Returns:
         str: A sanitized version of the filename with unsafe characters replaced by underscores.
     """
-    # Allow letters, numbers, underscores, hyphens, dots, and brackets
-    return re.sub(r'[^A-Za-z0-9_.\-\[\]]+', '_', filename)
+    # Allow letters, numbers, underscores, hyphens, dots, brackets, apostrophes, and spaces
+    return re.sub(r"[^A-Za-z0-9_.\-\[\]\' ]+", '_', filename)
 
 
 def get_final_filename(audio_tech: str, video_tech: str, video_title: str) -> str:
